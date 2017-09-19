@@ -25,7 +25,7 @@ router.get("/:id", async (ctx, next) => {
   let {id} = ctx.params
   let album = db.albums[id]
   
-  if(!album) return send404(ctx, next)
+  if (!album) return send404(ctx, next)
   
   ctx.response.body = album
   await next()
@@ -35,7 +35,7 @@ router.get("/:month/:year", async (ctx, next) => {
   let {month, year} = ctx.params
   let albums = R.filter(R.whereEq({month, year}), db.albums)
   
-  if(!albums) return send404(ctx, next)
+  if (!albums) return send404(ctx, next)
 
   ctx.response.body = albums
   await next()
@@ -46,7 +46,7 @@ router.get("/:month/:year", async (ctx, next) => {
 router.post("/", async (ctx, next) => {
   let {title, month, year} = ctx.request.body
   
-  if(!title || !month || !year) return send400(ctx, next)
+  if (!title || !month || !year) return send400(ctx, next)
 
   let id = uid.sync(3)
   db.albums[id] = { title: title, month: month, year: year }
@@ -60,12 +60,12 @@ router.post("/", async (ctx, next) => {
 router.put("/:id", async (ctx, next) => {
   let {title, month, year} = ctx.request.body
  
-  if(!title || !month || !year) return send400(ctx, next)
+  if (!title || !month || !year) return send400(ctx, next)
 
   let {id} = ctx.params
   let album = db.albums[id]
   
-  if(!album) return send404(ctx, next)
+  if (!album) return send404(ctx, next)
 
   db.albums[id] = R.merge(album, { title: title, month: month, year: year })
   
@@ -75,11 +75,11 @@ router.put("/:id", async (ctx, next) => {
 
 
 // DELETE
-router.delete("/:id", async(ctx, next) => {
+router.delete("/:id", async (ctx, next) => {
   let {id} = ctx.params
   let album = db.albums[id]
   
-  if(!album) return send404(ctx, next)
+  if (!album) return send404(ctx, next)
   
   db.albums = R.omit(id, db.albums)
   
