@@ -81,9 +81,8 @@ let db = {}
 
 db.albums = R.reduce((accum, item) => {
   let id = R.prop("id", item)
-  let itemWithoutId = R.omit("id", item)
   
-  accum[id] = itemWithoutId
+  accum[id] = item
   return accum
 }, {}, albums) 
 
