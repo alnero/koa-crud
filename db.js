@@ -2,11 +2,11 @@ let uid = require("uid-safe")
 let R = require("ramda")
 
 let albums = [
-  {title: "Emika", month: "October", year: "2011", id: "eo11"},
-  {title: "Skyline", month: "October", year: "2011", id: "so11"},
-  {title: "The quiet hype", month: "March", year: "2009", id: "tm09"},
-  {title: "Insides", month: "May", year: "2009", id: "im09"},
-  {title: "Human after all", month: "March", year: "2005", id: "hm05"},
+  {title: "Emika", month: "October", year: "2011", musicianId: "em86", albumId: "eo11"},
+  {title: "Skyline", month: "October", year: "2011", musicianId: "yt70", albumId: "so11"},
+  {title: "The quiet hype", month: "March", year: "2009", musicianId: "jr05", albumId: "tm09"},
+  {title: "Insides", month: "May", year: "2009", musicianId: "jh79", albumId: "im09"},
+  {title: "Human after all", month: "March", year: "2005", musicianId: "dp93", albumId: "hm05"}
 ]
 
 let tracks = [
@@ -65,25 +65,33 @@ let tracks = [
   {number: 7, title: "On/Off", length: "0:19", albumId: "hm05", trackId: uid.sync(3)},
   {number: 8, title: "Television Rules the Nation", length: "4:50", albumId: "hm05", trackId: uid.sync(3)},
   {number: 9, title: "Technologic", length: "4:44", albumId: "hm05", trackId: uid.sync(3)},
-  {number: 10, title: "Emotion", length: "6:57", albumId: "hm05", trackId: uid.sync(3)},
+  {number: 10, title: "Emotion", length: "6:57", albumId: "hm05", trackId: uid.sync(3)}
 ]
 
-let musician = [
+let musicians = [
   {name: "Emika", musicianId: "em86"},
   {name: "Yann Tiersen", musicianId: "yt70"},
   {name: "Jupiter Rising", musicianId: "jr05"},
   {name: "Jon Hopkins", musicianId: "jh79"},
-  {name: "Daft Punk", musicianId: "dp93"},
+  {name: "Daft Punk", musicianId: "dp93"}
 ]
 
 
 let db = {}
 
-db.albums = R.reduce((accum, item) => {
-  let id = R.prop("id", item)
+let collectionGenerator = function(title, arr) {
+  let collection = R.reduce((accum, item) => {
+    let id = R.prop(title + "Id", item)
   
-  accum[id] = item
-  return accum
-}, {}, albums) 
+    accum[id] = item
+    return accum
+  }, {}, arr)
+  
+  return collection
+}
+
+db.musicians = collectionGenerator("musician", musicians) 
+db.albums = collectionGenerator("album", albums)
+db.tracks = collectionGenerator("track", tracks)
 
 module.exports = db
