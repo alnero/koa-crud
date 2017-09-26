@@ -21,9 +21,9 @@ router.get("/", async (ctx, next) => {
   await next()
 })
 
-router.get("/:id", async (ctx, next) => {
-  let {id} = ctx.params
-  let album = db.albums[id]
+router.get("/id/:str", async (ctx, next) => {
+  let {str} = ctx.params
+  let album = db.albums[str]
   
   if (!album) return send404(ctx, next)
   
@@ -31,13 +31,60 @@ router.get("/:id", async (ctx, next) => {
   await next()
 })
 
-router.get("/:month/:year", async (ctx, next) => {
+router.get("/title/:str", async (ctx, next) => {
+  let {str} = ctx.params
+  let albums = R.filter(album => {
+    return album.title.includes(str)
+  }, db.albums)
+
+  if (!albums) return send404(ctx, next)
+
+  ctx.response.body = albums
+  await next()  
+})
+
+router.get("/date/:month/:year", async (ctx, next) => {
   let {month, year} = ctx.params
   let albums = R.filter(R.whereEq({month, year}), db.albums)
   
   if (!albums) return send404(ctx, next)
 
   ctx.response.body = albums
+  await next()
+})
+
+router.get("/musicians/id/:str", async (ctx, next) => {
+  let {str} = ctx.params
+  let albums = R.filter(R.whereEq({musicianId: str}), db.albums)
+  
+  if (!albums) return send404(ctx, next)
+
+  ctx.response.body = albums
+  await next()
+})
+
+
+router.get("/musicians/name/:str", async (ctx, next) => {
+  let {str} = ctx.params
+
+  let musiciansFindByName = R.filter(musician => {
+    return musician.name.includes(str)
+  }, db.musicians) 
+
+  let albumsByMusicianName = R.reduce((accum, musician) => {
+    let name = musician.name
+  
+    let albums = R.filter(album => {
+      return musician.musicianId == album.musicianId 
+    }, db.albums)
+  
+    accum[name] = albums
+    return accum
+  }, {}, R.values(musiciansFindByName))
+  
+  if (!albumsByMusicianName) return send404(ctx, next)
+
+  ctx.response.body = albumsByMusicianName
   await next()
 })
 
