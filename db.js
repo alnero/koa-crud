@@ -2,11 +2,11 @@ let uid = require("uid-safe")
 let R = require("ramda")
 
 let albums = [
-  {title: "Emika", month: "October", year: "2011", musicianId: "em86", albumId: "eo11"},
-  {title: "Skyline", month: "October", year: "2011", musicianId: "yt70", albumId: "so11"},
-  {title: "The quiet hype", month: "March", year: "2009", musicianId: "jr05", albumId: "tm09"},
-  {title: "Insides", month: "May", year: "2009", musicianId: "jh79", albumId: "im09"},
-  {title: "Human after all", month: "March", year: "2005", musicianId: "dp93", albumId: "hm05"}
+  {title: "Emika", month: "October", year: "2011", artistId: "em86", albumId: "eo11"},
+  {title: "Skyline", month: "October", year: "2011", artistId: "yt70", albumId: "so11"},
+  {title: "The quiet hype", month: "March", year: "2009", artistId: "jr05", albumId: "tm09"},
+  {title: "Insides", month: "May", year: "2009", artistId: "jh79", albumId: "im09"},
+  {title: "Human after all", month: "March", year: "2005", artistId: "dp93", albumId: "hm05"}
 ]
 
 let tracks = [
@@ -68,12 +68,12 @@ let tracks = [
   {number: 10, title: "Emotion", length: "6:57", albumId: "hm05", trackId: uid.sync(3)}
 ]
 
-let musicians = [
-  {name: "Emika", musicianId: "em86"},
-  {name: "Yann Tiersen", musicianId: "yt70"},
-  {name: "Jupiter Rising", musicianId: "jr05"},
-  {name: "Jon Hopkins", musicianId: "jh79"},
-  {name: "Daft Punk", musicianId: "dp93"}
+let artists = [
+  {name: "Emika", artistId: "em86"},
+  {name: "Yann Tiersen", artistId: "yt70"},
+  {name: "Jupiter Rising", artistId: "jr05"},
+  {name: "Jon Hopkins", artistId: "jh79"},
+  {name: "Daft Punk", artistId: "dp93"}
 ]
 
 
@@ -90,7 +90,7 @@ let collectionGenerator = function(title, arr) {
   return collection
 }
 
-db.musicians = collectionGenerator("musician", musicians) 
+db.artists = collectionGenerator("artist", artists) 
 db.albums = collectionGenerator("album", albums)
 db.tracks = collectionGenerator("track", tracks)
 
