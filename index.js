@@ -19,13 +19,13 @@ app.use(bodyParser())
 
 // -- ALBUMS --
 
-// /albums
+// GET /albums
 router.get("/albums", async (ctx, next) => {
   ctx.response.body = db.albums
   await next()
 })
 
-// /albums/:id
+// GET /albums/:id
 router.get("/albums/:id", async (ctx, next) => {
   let {id} = ctx.params
   let album = db.albums[id]
@@ -36,36 +36,36 @@ router.get("/albums/:id", async (ctx, next) => {
   await next()
 })
 
-// /albums/by-title/:str
+// GET /albums/by-title/:str
 router.get("/albums/by-title/:str", async (ctx, next) => {
   let {str} = ctx.params
   let albums = R.filter(album => {
-    return album.title.includes(str)
+    return checkSubstringInLowerCase(album.title, str)
   }, db.albums)
 
-  if (!albums) return send404(ctx, next)
+  if (R.isEmpty(albums)) return send404(ctx, next)
 
   ctx.response.body = albums
   await next()  
 })
 
-// /albums/by-date/:month/:year
+// GET /albums/by-date/:month/:year
 router.get("/albums/by-date/:month/:year", async (ctx, next) => {
   let {month, year} = ctx.params
   let albums = R.filter(R.whereEq({month, year}), db.albums)
   
-  if (!albums) return send404(ctx, next)
+  if (R.isEmpty(albums)) return send404(ctx, next)
 
   ctx.response.body = albums
   await next()
 })
 
-// /albums/by-artist/:id
-router.get("/albums/by-artist/:id", async (ctx, next) => {
+// GET /albums/by-artistId/:id
+router.get("/albums/by-artistId/:id", async (ctx, next) => {
   let {id} = ctx.params
   let albums = R.filter(R.whereEq({artistId: id}), db.albums)
   
-  if (!albums) return send404(ctx, next)
+  if (R.isEmpty(albums)) return send404(ctx, next)
 
   ctx.response.body = albums
   await next()
@@ -74,13 +74,13 @@ router.get("/albums/by-artist/:id", async (ctx, next) => {
 
 // -- ARTISTS --
 
-// /artists
+// GET /artists
 router.get("/artists", async (ctx, next) => {
   ctx.response.body = db.artists
   await next()
 })
 
-// /artists/:id
+// GET /artists/:id
 router.get("/artists/:id", async (ctx, next) => {
   let {id} = ctx.params
   let artist = db.artists[id]
@@ -91,14 +91,14 @@ router.get("/artists/:id", async (ctx, next) => {
   await next()
 })
 
-// /artists/by-name/:str
+// GET /artists/by-name/:str
 router.get("/artists/by-name/:str", async (ctx, next) => {
   let {str} = ctx.params
   let artists = R.filter(artist => {
-    return artist.name.includes(str)
+    return checkSubstringInLowerCase(artist.name, str)
   }, db.artists)
 
-  if (!artists) return send404(ctx, next)
+  if (R.isEmpty(artists)) return send404(ctx, next)
 
   ctx.response.body = artists
   await next()  
@@ -107,13 +107,13 @@ router.get("/artists/by-name/:str", async (ctx, next) => {
 
 // -- TRACKS --
 
-// /tracks
+// GET /tracks
 router.get("/tracks", async (ctx, next) => {
   ctx.response.body = db.tracks
   await next()
 })
 
-// /tracks/:id
+// GET /tracks/:id
 router.get("/tracks/:id", async (ctx, next) => {
   let {id} = ctx.params
   let track = db.tracks[id]
@@ -124,40 +124,41 @@ router.get("/tracks/:id", async (ctx, next) => {
   await next()
 })
 
-// /tracks/by-title/:str
+// GET /tracks/by-title/:str
 router.get("/tracks/by-title/:str", async (ctx, next) => {
   let {str} = ctx.params
   let tracks = R.filter(track => {
-    return track.title.includes(str)
+    return checkSubstringInLowerCase(track.title, str)
   }, db.tracks)
 
-  if (!tracks) return send404(ctx, next)
+  if (R.isEmpty(tracks)) return send404(ctx, next)
 
   ctx.response.body = tracks
   await next()  
 })
 
-// /tracks/by-length/:time -> time format for url 3:27 
+// GET /tracks/by-length/:time -> time format for url 3:27 
 router.get("/tracks/by-length/:time", async (ctx, next) => {
   let {time} = ctx.params
+
   let tracks = R.filter(track => {
-    return track.length >= time
+    return compareDurations(track.length, time)
   }, db.tracks)
 
-  if (!tracks) return send404(ctx, next)
+  if (R.isEmpty(tracks)) return send404(ctx, next)
 
   ctx.response.body = tracks
   await next()  
 })
 
-// /tracks/by-album/:id
-router.get("/tracks/by-album/:id", async (ctx, next) => {
+// GET /tracks/by-albumId/:id
+router.get("/tracks/by-albumId/:id", async (ctx, next) => {
   let {id} = ctx.params
   let tracks = R.filter(track => {
     return track.albumId == id
   }, db.tracks)
 
-  if (!tracks) return send404(ctx, next)
+  if (R.isEmpty(albums)) return send404(ctx, next)
 
   ctx.response.body = tracks
   await next()  
@@ -223,6 +224,17 @@ async function send400(ctx, next) {
   await next()
 }
 
+
+let compareDurations = (timeStr1, timeStr2) => {
+  let [min1, sec1] = timeStr1.split(":")
+  let [min2, sec2] = timeStr2.split(":")
+
+  return (+ sec1 + min1 * 60) >= (+ sec2 + min2 * 60)
+}
+
+let checkSubstringInLowerCase = (str, subStr) => {
+  return str.toLowerCase().includes(subStr.toLowerCase())
+}
 
 app.use(router.routes())
 
