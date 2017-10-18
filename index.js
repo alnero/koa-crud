@@ -9,26 +9,28 @@ let bodyParser = require("koa-bodyparser")
 let db = require("./db")
 
 let app = new Koa()
-let router = new KoaRouter()
 
 app.use(logger())
 app.use(bodyParser())
 
 
-// READ
-
 // -- ALBUMS --
 
+let albumsRouter = new KoaRouter({ prefix: "/albums" })
+app.use(albumsRouter.routes())
+
+// -- READ ALBUMS --
+
 // GET /albums
-router.get("/albums", async (ctx, next) => {
+albumsRouter.get("/", async (ctx, next) => {
   ctx.response.body = db.albums
   await next()
 })
 
-// GET /albums/:id
-router.get("/albums/:id", async (ctx, next) => {
-  let {id} = ctx.params
-  let album = db.albums[id]
+// GET /albums/:albumId
+albumsRouter.get("/:albumId", async (ctx, next) => {
+  let {albumId} = ctx.params
+  let album = db.albums[albumId]
   
   if (!album) return send404(ctx, next)
   
@@ -37,10 +39,10 @@ router.get("/albums/:id", async (ctx, next) => {
 })
 
 // GET /albums/by-title/:str
-router.get("/albums/by-title/:str", async (ctx, next) => {
+albumsRouter.get("/by-title/:str", async (ctx, next) => {
   let {str} = ctx.params
   let albums = R.filter(album => {
-    return checkSubstringInLowerCase(album.title, str)
+    return includesCaseInsensitive(album.title, str)
   }, db.albums)
 
   if (R.isEmpty(albums)) return send404(ctx, next)
@@ -50,7 +52,7 @@ router.get("/albums/by-title/:str", async (ctx, next) => {
 })
 
 // GET /albums/by-date/:month/:year
-router.get("/albums/by-date/:month/:year", async (ctx, next) => {
+albumsRouter.get("/by-date/:month/:year", async (ctx, next) => {
   let {month, year} = ctx.params
   let albums = R.filter(R.whereEq({month, year}), db.albums)
   
@@ -60,10 +62,10 @@ router.get("/albums/by-date/:month/:year", async (ctx, next) => {
   await next()
 })
 
-// GET /albums/by-artistId/:id
-router.get("/albums/by-artistId/:id", async (ctx, next) => {
-  let {id} = ctx.params
-  let albums = R.filter(R.whereEq({artistId: id}), db.albums)
+// GET /albums/by-artist/:artistId
+albumsRouter.get("/by-artist/:artistId", async (ctx, next) => {
+  let {artistId} = ctx.params
+  let albums = R.filter(R.whereEq({artistId: artistId}), db.albums)
   
   if (R.isEmpty(albums)) return send404(ctx, next)
 
@@ -71,19 +73,71 @@ router.get("/albums/by-artistId/:id", async (ctx, next) => {
   await next()
 })
 
+// -- CREATE ALBUMS --
+
+// POST /albums
+albumsRouter.post("/", async (ctx, next) => {
+  let {title, month, year} = ctx.request.body
+  
+  if (!title || !month || !year) return send400(ctx, next)
+
+  let albumId = uid.sync(3)
+  db.albums[albumId] = { title: title, month: month, year: year }
+  
+  ctx.response.body = db.albums
+  await next()
+})
+
+// -- UPDATE ALBUMS --
+
+// PUT /albums/:albumId
+albumsRouter.put("/:albumId", async (ctx, next) => {
+  let {title, month, year} = ctx.request.body
+ 
+  if (!title || !month || !year) return send400(ctx, next)
+
+  let {albumId} = ctx.params
+  let album = db.albums[albumId]
+  
+  if (!album) return send404(ctx, next)
+
+  db.albums[albumId] = R.merge(album, { title: title, month: month, year: year })
+  
+  ctx.response.body = db.albums
+  await next()
+})
+
+// -- DELETE ALBUMS --
+
+// DELETE /albums/:albumId
+albumsRouter.delete("/:albumId", async (ctx, next) => {
+  let {albumId} = ctx.params
+  let album = db.albums[albumId]
+  
+  if (!album) return send404(ctx, next)
+  
+  db.albums = R.omit(albumId, db.albums)
+  
+  ctx.response.body = db.albums
+  await next()
+})
+
 
 // -- ARTISTS --
 
+let artistsRouter = new KoaRouter({ prefix: "/artists" })
+app.use(artistsRouter.routes())
+
 // GET /artists
-router.get("/artists", async (ctx, next) => {
+artistsRouter.get("/", async (ctx, next) => {
   ctx.response.body = db.artists
   await next()
 })
 
-// GET /artists/:id
-router.get("/artists/:id", async (ctx, next) => {
-  let {id} = ctx.params
-  let artist = db.artists[id]
+// GET /artists/:artistId
+artistsRouter.get("/:artistId", async (ctx, next) => {
+  let {artistId} = ctx.params
+  let artist = db.artists[artistId]
   
   if (!artist) return send404(ctx, next)
   
@@ -92,10 +146,10 @@ router.get("/artists/:id", async (ctx, next) => {
 })
 
 // GET /artists/by-name/:str
-router.get("/artists/by-name/:str", async (ctx, next) => {
+artistsRouter.get("/by-name/:str", async (ctx, next) => {
   let {str} = ctx.params
   let artists = R.filter(artist => {
-    return checkSubstringInLowerCase(artist.name, str)
+    return includesCaseInsensitive(artist.name, str)
   }, db.artists)
 
   if (R.isEmpty(artists)) return send404(ctx, next)
@@ -107,16 +161,19 @@ router.get("/artists/by-name/:str", async (ctx, next) => {
 
 // -- TRACKS --
 
+let tracksRouter = new KoaRouter({ prefix: "/tracks"})
+app.use(tracksRouter.routes())
+
 // GET /tracks
-router.get("/tracks", async (ctx, next) => {
+tracksRouter.get("/", async (ctx, next) => {
   ctx.response.body = db.tracks
   await next()
 })
 
-// GET /tracks/:id
-router.get("/tracks/:id", async (ctx, next) => {
-  let {id} = ctx.params
-  let track = db.tracks[id]
+// GET /tracks/:trackId
+tracksRouter.get("/:trackId", async (ctx, next) => {
+  let {trackId} = ctx.params
+  let track = db.tracks[trackId]
   
   if (!track) return send404(ctx, next)
   
@@ -125,10 +182,10 @@ router.get("/tracks/:id", async (ctx, next) => {
 })
 
 // GET /tracks/by-title/:str
-router.get("/tracks/by-title/:str", async (ctx, next) => {
+tracksRouter.get("/by-title/:str", async (ctx, next) => {
   let {str} = ctx.params
   let tracks = R.filter(track => {
-    return checkSubstringInLowerCase(track.title, str)
+    return includesCaseInsensitive(track.title, str)
   }, db.tracks)
 
   if (R.isEmpty(tracks)) return send404(ctx, next)
@@ -138,7 +195,7 @@ router.get("/tracks/by-title/:str", async (ctx, next) => {
 })
 
 // GET /tracks/by-length/:time -> time format for url 3:27 
-router.get("/tracks/by-length/:time", async (ctx, next) => {
+tracksRouter.get("/by-length/:time", async (ctx, next) => {
   let {time} = ctx.params
 
   let tracks = R.filter(track => {
@@ -151,63 +208,17 @@ router.get("/tracks/by-length/:time", async (ctx, next) => {
   await next()  
 })
 
-// GET /tracks/by-albumId/:id
-router.get("/tracks/by-albumId/:id", async (ctx, next) => {
-  let {id} = ctx.params
+// GET /tracks/by-album/:albumId
+tracksRouter.get("/by-album/:albumId", async (ctx, next) => {
+  let {albumId} = ctx.params
   let tracks = R.filter(track => {
-    return track.albumId == id
+    return track.albumId == albumId
   }, db.tracks)
 
-  if (R.isEmpty(albums)) return send404(ctx, next)
+  if (R.isEmpty(tracks)) return send404(ctx, next)
 
   ctx.response.body = tracks
   await next()  
-})
-
-
-// CREATE
-router.post("/", async (ctx, next) => {
-  let {title, month, year} = ctx.request.body
-  
-  if (!title || !month || !year) return send400(ctx, next)
-
-  let id = uid.sync(3)
-  db.albums[id] = { title: title, month: month, year: year }
-  
-  ctx.response.body = db.albums
-  await next()
-})
-
-
-// UPDATE
-router.put("/:id", async (ctx, next) => {
-  let {title, month, year} = ctx.request.body
- 
-  if (!title || !month || !year) return send400(ctx, next)
-
-  let {id} = ctx.params
-  let album = db.albums[id]
-  
-  if (!album) return send404(ctx, next)
-
-  db.albums[id] = R.merge(album, { title: title, month: month, year: year })
-  
-  ctx.response.body = db.albums
-  await next()
-})
-
-
-// DELETE
-router.delete("/:id", async (ctx, next) => {
-  let {id} = ctx.params
-  let album = db.albums[id]
-  
-  if (!album) return send404(ctx, next)
-  
-  db.albums = R.omit(id, db.albums)
-  
-  ctx.response.body = db.albums
-  await next()
 })
 
 
@@ -225,6 +236,7 @@ async function send400(ctx, next) {
 }
 
 
+// COMMON FUNCTIONS
 let compareDurations = (timeStr1, timeStr2) => {
   let [min1, sec1] = timeStr1.split(":")
   let [min2, sec2] = timeStr2.split(":")
@@ -232,11 +244,10 @@ let compareDurations = (timeStr1, timeStr2) => {
   return (+ sec1 + min1 * 60) >= (+ sec2 + min2 * 60)
 }
 
-let checkSubstringInLowerCase = (str, subStr) => {
+let includesCaseInsensitive = (str, subStr) => {
   return str.toLowerCase().includes(subStr.toLowerCase())
 }
 
-app.use(router.routes())
 
 app.listen(3000, () => {
   console.log("Server is listening on port 3000")
