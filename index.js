@@ -77,12 +77,15 @@ albumsRouter.get("/by-artist/:artistId", async (ctx, next) => {
 
 // POST /albums
 albumsRouter.post("/", async (ctx, next) => {
-  let {title, month, year} = ctx.request.body
+  let {title, month, year, artistId} = ctx.request.body
   
-  if (!title || !month || !year) return send400(ctx, next)
+  if (!title || !month || !year || !artistId) return send400(ctx, next)
+
+  // no artist in db -> no creation of album
+  if (!R.has(artistId, db.artists)) return send400(ctx, next)
 
   let albumId = uid.sync(3)
-  db.albums[albumId] = { title: title, month: month, year: year }
+  db.albums[albumId] = { title: title, month: month, year: year, artistId: artistId, albumId: albumId }
   
   ctx.response.body = db.albums
   await next()
@@ -92,16 +95,19 @@ albumsRouter.post("/", async (ctx, next) => {
 
 // PUT /albums/:albumId
 albumsRouter.put("/:albumId", async (ctx, next) => {
-  let {title, month, year} = ctx.request.body
+  let {title, month, year, artistId} = ctx.request.body
  
-  if (!title || !month || !year) return send400(ctx, next)
+  if (!title || !month || !year || !artistId) return send400(ctx, next)
 
   let {albumId} = ctx.params
   let album = db.albums[albumId]
   
   if (!album) return send404(ctx, next)
 
-  db.albums[albumId] = R.merge(album, { title: title, month: month, year: year })
+  // no artist in db -> no update of album
+  if (!R.has(artistId, db.artists)) return send400(ctx, next)
+
+  db.albums[albumId] = R.merge(album, { title: title, month: month, year: year, artistId: artistId })
   
   ctx.response.body = db.albums
   await next()
@@ -116,7 +122,7 @@ albumsRouter.delete("/:albumId", async (ctx, next) => {
   
   if (!album) return send404(ctx, next)
   
-  db.albums = R.omit(albumId, db.albums)
+  db.albums = R.dissoc(albumId, db.albums)
   
   ctx.response.body = db.albums
   await next()
@@ -127,6 +133,8 @@ albumsRouter.delete("/:albumId", async (ctx, next) => {
 
 let artistsRouter = new KoaRouter({ prefix: "/artists" })
 app.use(artistsRouter.routes())
+
+// -- READ ARTISTS --
 
 // GET /artists
 artistsRouter.get("/", async (ctx, next) => {
@@ -156,6 +164,55 @@ artistsRouter.get("/by-name/:str", async (ctx, next) => {
 
   ctx.response.body = artists
   await next()  
+})
+
+// -- CREATE ARTISTS --
+
+// POST /artists
+artistsRouter.post("/", async (ctx, next) => {
+  let {name} = ctx.request.body
+  
+  if (!name) return send400(ctx, next)
+
+  let artistId = uid.sync(3)
+  db.artists[artistId] = { name: name, artistId: artistId }
+  
+  ctx.response.body = db.artists
+  await next()
+})
+
+// -- UPDATE ARTISTS --
+
+// PUT /artists/:artistId
+artistsRouter.put("/:artistId", async (ctx, next) => {
+  let {name} = ctx.request.body
+ 
+  if (!name) return send400(ctx, next)
+
+  let {artistId} = ctx.params
+  let artist = db.artists[artistId]
+  
+  if (!artist) return send404(ctx, next)
+
+  db.artists[artistId] = R.merge(artist, { name: name })
+  
+  ctx.response.body = db.artists
+  await next()
+})
+
+// -- DELETE ARTISTS --
+
+// DELETE /artists/:artistId
+artistsRouter.delete("/:artistId", async (ctx, next) => {
+  let {artistId} = ctx.params
+  let artist = db.artists[artistId]
+  
+  if (!artist) return send404(ctx, next)
+  
+  db.artists = R.dissoc(artistId, db.artists)
+  
+  ctx.response.body = db.artists
+  await next()
 })
 
 
