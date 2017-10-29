@@ -123,6 +123,8 @@ albumsRouter.delete("/:albumId", async (ctx, next) => {
   if (!album) return send404(ctx, next)
   
   db.albums = R.dissoc(albumId, db.albums)
+
+  deleteAlbumTracks(albumId)
   
   ctx.response.body = db.albums
   await next()
@@ -210,6 +212,8 @@ artistsRouter.delete("/:artistId", async (ctx, next) => {
   if (!artist) return send404(ctx, next)
   
   db.artists = R.dissoc(artistId, db.artists)
+
+  deleteArtistAlbumsAndTracks(artistId)
   
   ctx.response.body = db.artists
   await next()
@@ -303,6 +307,29 @@ let compareDurations = (timeStr1, timeStr2) => {
 
 let includesCaseInsensitive = (str, subStr) => {
   return str.toLowerCase().includes(subStr.toLowerCase())
+}
+
+let deleteAlbumTracks = (albumId) => {
+  // R.mapObjIndexed use function(value, key, object){}
+  R.mapObjIndexed((track, trackId) => {
+    
+    if(R.propEq("albumId", albumId, track)) {
+        db.tracks = R.dissoc(trackId, db.tracks)
+    }
+  
+  }, db.tracks)
+}
+
+let deleteArtistAlbumsAndTracks = (artistId) => {
+  // R.mapObjIndexed use function(value, key, object){}
+  R.mapObjIndexed((album, albumId) => {
+    
+    if(R.propEq("artistId", artistId, album)) {
+        db.albums = R.dissoc(albumId, db.albums)
+        deleteAlbumTracks(albumId)
+    }
+  
+  }, db.albums)
 }
 
 
