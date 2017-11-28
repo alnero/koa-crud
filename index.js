@@ -85,7 +85,8 @@ albumsRouter.post("/", async (ctx, next) => {
   if (!R.has(artistId, db.artists)) return send400(ctx, next)
 
   let albumId = uid.sync(3)
-  db.albums[albumId] = { title: title, month: month, year: year, artistId: artistId, albumId: albumId }
+  
+  db.albums[albumId] = { title, month, year, artistId, albumId }
   
   ctx.response.body = db.albums
   await next()
@@ -107,7 +108,7 @@ albumsRouter.put("/:albumId", async (ctx, next) => {
   // no artist in db -> no update of album
   if (!R.has(artistId, db.artists)) return send400(ctx, next)
 
-  db.albums[albumId] = R.merge(album, { title: title, month: month, year: year, artistId: artistId })
+  db.albums[albumId] = R.merge(album, { title, month, year, artistId })
   
   ctx.response.body = db.albums
   await next()
@@ -122,9 +123,9 @@ albumsRouter.delete("/:albumId", async (ctx, next) => {
   
   if (!album) return send404(ctx, next)
   
-  db.tracks = R.filter(track => track.albumId != albumId, db.tracks)
-
   db.albums = R.dissoc(albumId, db.albums)
+
+  db.tracks = R.filter(track => R.has(track.albumId, db.albums), db.tracks)
 
   ctx.response.body = db.albums
   await next()
@@ -211,16 +212,11 @@ artistsRouter.delete("/:artistId", async (ctx, next) => {
   
   if (!artist) return send404(ctx, next)
   
-  let albumsToDelete = R.filter(album => album.artistId == artistId, db.albums)
-
-  R.map(albumToDelete => { 
-    let albumToDeleteId = R.prop('albumId', albumToDelete)
-    db.tracks = R.filter(track => track.albumId != albumToDeleteId, db.tracks) 
-  }, albumsToDelete)
-
-  db.albums = R.filter(album => album.artistId != artistId, db.albums)
-
   db.artists = R.dissoc(artistId, db.artists)
+
+  db.albums = R.filter(album => R.has(album.artistId, db.artists), db.albums)
+  
+  db.tracks = R.filter(track => R.has(track.albumId, db.albums), db.tracks)
 
   ctx.response.body = db.artists
   await next()
