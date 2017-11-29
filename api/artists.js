@@ -1,7 +1,8 @@
 let R = require("ramda")
 let uid = require("uid-safe")
 
-let helperFuntions = require("../helper_functions")
+let helperFuntions = require("../helpers")
+let errorFunctions = require("../errors")
 
 module.exports = (artistsRouter, db) => {
   
@@ -18,7 +19,7 @@ module.exports = (artistsRouter, db) => {
     let {artistId} = ctx.params
     let artist = db.artists[artistId]
     
-    if (!artist) return send404(ctx, next)
+    if (!artist) return errorFunctions.send404(ctx, next)
     
     ctx.response.body = artist
     await next()
@@ -31,7 +32,7 @@ module.exports = (artistsRouter, db) => {
       return helperFuntions.includesCaseInsensitive(artist.name, str)
     }, db.artists)
   
-    if (R.isEmpty(artists)) return send404(ctx, next)
+    if (R.isEmpty(artists)) return errorFunctions.send404(ctx, next)
   
     ctx.response.body = artists
     await next()  
@@ -43,7 +44,7 @@ module.exports = (artistsRouter, db) => {
   artistsRouter.post("/", async (ctx, next) => {
     let {name} = ctx.request.body
     
-    if (!name) return send400(ctx, next)
+    if (!name) return errorFunctions.send400(ctx, next)
   
     let artistId = uid.sync(3)
     db.artists[artistId] = { name: name, artistId: artistId }
@@ -58,12 +59,12 @@ module.exports = (artistsRouter, db) => {
   artistsRouter.put("/:artistId", async (ctx, next) => {
     let {name} = ctx.request.body
    
-    if (!name) return send400(ctx, next)
+    if (!name) return errorFunctions.send400(ctx, next)
   
     let {artistId} = ctx.params
     let artist = db.artists[artistId]
     
-    if (!artist) return send404(ctx, next)
+    if (!artist) return errorFunctions.send404(ctx, next)
   
     db.artists[artistId] = R.merge(artist, { name: name })
     
@@ -78,7 +79,7 @@ module.exports = (artistsRouter, db) => {
     let {artistId} = ctx.params
     let artist = db.artists[artistId]
     
-    if (!artist) return send404(ctx, next)
+    if (!artist) return errorFunctions.send404(ctx, next)
     
     db.artists = R.dissoc(artistId, db.artists)
   

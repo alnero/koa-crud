@@ -1,7 +1,8 @@
 let R = require("ramda")
 let uid = require("uid-safe")
 
-let helperFuntions = require("../helper_functions")
+let helperFuntions = require("../helpers")
+let errorFunctions = require("../errors")
 
 module.exports = (albumsRouter, db) => {
 
@@ -18,7 +19,7 @@ module.exports = (albumsRouter, db) => {
     let {albumId} = ctx.params
     let album = db.albums[albumId]
   
-    if (!album) return send404(ctx, next)
+    if (!album) return errorFunctions.send404(ctx, next)
   
     ctx.response.body = album
     await next()
@@ -31,7 +32,7 @@ module.exports = (albumsRouter, db) => {
       return helperFuntions.includesCaseInsensitive(album.title, str)
     }, db.albums)
 
-    if (R.isEmpty(albums)) return send404(ctx, next)
+    if (R.isEmpty(albums)) return errorFunctions.send404(ctx, next)
 
     ctx.response.body = albums
     await next()  
@@ -42,7 +43,7 @@ module.exports = (albumsRouter, db) => {
     let {month, year} = ctx.params
     let albums = R.filter(R.whereEq({month, year}), db.albums)
   
-    if (R.isEmpty(albums)) return send404(ctx, next)
+    if (R.isEmpty(albums)) return errorFunctions.send404(ctx, next)
 
     ctx.response.body = albums
     await next()
@@ -53,7 +54,7 @@ module.exports = (albumsRouter, db) => {
     let {artistId} = ctx.params
     let albums = R.filter(R.whereEq({artistId: artistId}), db.albums)
   
-    if (R.isEmpty(albums)) return send404(ctx, next)
+    if (R.isEmpty(albums)) return errorFunctions.send404(ctx, next)
 
     ctx.response.body = albums
     await next()
@@ -65,10 +66,10 @@ module.exports = (albumsRouter, db) => {
   albumsRouter.post("/", async (ctx, next) => {
     let {title, month, year, artistId} = ctx.request.body
   
-    if (!title || !month || !year || !artistId) return send400(ctx, next)
+    if (!title || !month || !year || !artistId) return errorFunctions.send400(ctx, next)
 
     // no artist in db -> no creation of album
-    if (!R.has(artistId, db.artists)) return send400(ctx, next)
+    if (!R.has(artistId, db.artists)) return errorFunctions.send400(ctx, next)
 
     let albumId = uid.sync(3)
   
@@ -84,15 +85,15 @@ module.exports = (albumsRouter, db) => {
   albumsRouter.put("/:albumId", async (ctx, next) => {
     let {title, month, year, artistId} = ctx.request.body
  
-    if (!title || !month || !year || !artistId) return send400(ctx, next)
+    if (!title || !month || !year || !artistId) return errorFunctions.send400(ctx, next)
 
     let {albumId} = ctx.params
     let album = db.albums[albumId]
   
-    if (!album) return send404(ctx, next)
+    if (!album) return errorFunctions.send404(ctx, next)
 
     // no artist in db -> no update of album
-    if (!R.has(artistId, db.artists)) return send400(ctx, next)
+    if (!R.has(artistId, db.artists)) return errorFunctions.send400(ctx, next)
 
     db.albums[albumId] = R.merge(album, { title, month, year, artistId })
   
@@ -107,7 +108,7 @@ module.exports = (albumsRouter, db) => {
     let {albumId} = ctx.params
     let album = db.albums[albumId]
   
-    if (!album) return send404(ctx, next)
+    if (!album) return errorFunctions.send404(ctx, next)
   
     db.albums = R.dissoc(albumId, db.albums)
 

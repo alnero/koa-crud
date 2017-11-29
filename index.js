@@ -5,6 +5,10 @@ let bodyParser = require("koa-bodyparser")
 
 let db = require("./db")
 
+let apiAlbums = require("./api/albums")
+let apiArtists = require("./api/artists")
+let apiTracks = require("./api/tracks")
+
 let app = new Koa()
 
 app.use(logger())
@@ -14,31 +18,17 @@ app.use(bodyParser())
 // -- ALBUMS --
 let albumsRouter = new KoaRouter({ prefix: "/albums" })
 app.use(albumsRouter.routes())
-require("./api/albums")(albumsRouter, db)
+apiAlbums(albumsRouter, db)
 
 // -- ARTISTS --
 let artistsRouter = new KoaRouter({ prefix: "/artists" })
 app.use(artistsRouter.routes())
-require("./api/artists")(artistsRouter, db)
+apiArtists(artistsRouter, db)
 
 // -- TRACKS --
-let tracksRouter = new KoaRouter({ prefix: "/tracks"})
+let tracksRouter = new KoaRouter({ prefix: "/tracks" })
 app.use(tracksRouter.routes())
-require("./api/tracks")(tracksRouter, db)
-
-
-// ERRORS
-async function send404(ctx, next) {
-  ctx.response.status = 404
-  ctx.response.body = "Not found"
-  await next()
-}
-
-async function send400(ctx, next) {
-  ctx.response.status = 400
-  ctx.response.body = "Bad request"
-  await next()
-}
+apiTracks(tracksRouter, db)
 
 
 app.listen(3000, () => {

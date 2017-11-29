@@ -1,7 +1,8 @@
 let R = require("ramda")
 let uid = require("uid-safe")
 
-let helperFuntions = require("../helper_functions")
+let helperFuntions = require("../helpers")
+let errorFunctions = require("../errors")
 
 module.exports = (tracksRouter, db) => {
   
@@ -18,7 +19,7 @@ module.exports = (tracksRouter, db) => {
     let {trackId} = ctx.params
     let track = db.tracks[trackId]
     
-    if (!track) return send404(ctx, next)
+    if (!track) return errorFunctions.send404(ctx, next)
     
     ctx.response.body = track
     await next()
@@ -31,7 +32,7 @@ module.exports = (tracksRouter, db) => {
       return helperFuntions.includesCaseInsensitive(track.title, str)
     }, db.tracks)
   
-    if (R.isEmpty(tracks)) return send404(ctx, next)
+    if (R.isEmpty(tracks)) return errorFunctions.send404(ctx, next)
   
     ctx.response.body = tracks
     await next()  
@@ -45,7 +46,7 @@ module.exports = (tracksRouter, db) => {
       return helperFuntions.compareDurations(track.length, time)
     }, db.tracks)
   
-    if (R.isEmpty(tracks)) return send404(ctx, next)
+    if (R.isEmpty(tracks)) return errorFunctions.send404(ctx, next)
   
     ctx.response.body = tracks
     await next()  
@@ -58,7 +59,7 @@ module.exports = (tracksRouter, db) => {
       return track.albumId == albumId
     }, db.tracks)
   
-    if (R.isEmpty(tracks)) return send404(ctx, next)
+    if (R.isEmpty(tracks)) return errorFunctions.send404(ctx, next)
   
     ctx.response.body = tracks
     await next()  
@@ -70,10 +71,10 @@ module.exports = (tracksRouter, db) => {
   tracksRouter.post("/", async (ctx, next) => {
     let {number, title, length, albumId} = ctx.request.body
   
-    if (!number || !title || !length || !albumId) return send400(ctx, next)
+    if (!number || !title || !length || !albumId) return errorFunctions.send400(ctx, next)
   
     // no album in db -> no creation of track
-    if (!R.has(albumId, db.albums)) return send400(ctx, next)
+    if (!R.has(albumId, db.albums)) return errorFunctions.send400(ctx, next)
   
     let trackId = uid.sync(3)
   
@@ -89,15 +90,15 @@ module.exports = (tracksRouter, db) => {
   tracksRouter.put("/:trackId", async (ctx, next) => {
     let {number, title, length, albumId} = ctx.request.body
   
-    if (!number || !title || !length || !albumId) return send400(ctx, next)
+    if (!number || !title || !length || !albumId) return errorFunctions.send400(ctx, next)
   
     let {trackId} = ctx.params
     let track = db.tracks[trackId]
   
-    if (!track) return send404(ctx, next)
+    if (!track) return errorFunctions.send404(ctx, next)
   
     // no album in db -> no update of track
-    if (!R.has(albumId, db.albums)) return send400(ctx, next)
+    if (!R.has(albumId, db.albums)) return errorFunctions.send400(ctx, next)
   
     db.tracks[trackId] = R.merge(track, {number, title, length, albumId})
   
@@ -112,7 +113,7 @@ module.exports = (tracksRouter, db) => {
     let {trackId} = ctx.params
     let track = db.tracks[trackId]
   
-    if (!track) return send404(ctx, next)
+    if (!track) return errorFunctions.send404(ctx, next)
   
     db.tracks = R.dissoc(trackId, db.tracks)
   
