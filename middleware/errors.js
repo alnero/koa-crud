@@ -13,7 +13,5 @@ async function send404(ctx, next) {
 }
 
 
-module.exports = {
-  send400: send400,
-  send404: send404
-}
+exports.send400 = send400
+exports.send404 = send404

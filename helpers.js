@@ -11,7 +11,6 @@ let includesCaseInsensitive = (str, subStr) => {
   return str.toLowerCase().includes(subStr.toLowerCase())
 }
 
-module.exports = {
-  compareDurations: compareDurations,
-  includesCaseInsensitive: includesCaseInsensitive
-}
+
+exports.compareDurations = compareDurations
+exports.includesCaseInsensitive = includesCaseInsensitive
