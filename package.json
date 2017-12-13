@@ -7,16 +7,16 @@
     "koa": "^2.3.0",
     "koa-bodyparser": "^4.2.0",
     "koa-convert": "^1.2.0",
-    "koa-logger": "^2.0.1",
-    "koa-pino-logger": "^2.1.1",
     "koa-router": "^7.1.1",
+    "pino": "^4.10.2",
     "ramda": "^0.24.1",
     "raw-body": "^2.2.0",
     "uid-safe": "^2.1.4"
   },
   "devDependencies": {},
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node index.js"
   },
   "repository": {
     "type": "git",
